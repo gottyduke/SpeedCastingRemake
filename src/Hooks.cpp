@@ -2,7 +2,10 @@
 
 #include "Settings.h"
 
-#include "DKUtil/Hook.h"
+#define DKUTIL_HOOK_SMART_ALLOC
+#define DKUTIL_HOOK_VERBOSE
+#include "DKUtil/Hook.hpp"
+
 #include "RE/SpellItem.h"
 
 
@@ -11,42 +14,39 @@ namespace Hooks
 	namespace
 	{
 		constexpr std::uint64_t FUNC_ID = 11358;
-		constexpr std::uintptr_t OFFSET_START = 0x21;
-		constexpr std::uintptr_t OFFSET_END = 0x26;
+		constexpr std::uintptr_t OFFSET_START = 0x11;
+		constexpr std::uintptr_t OFFSET_END = 0x19;
 
 		// post patch:
-		// movss xmm6, ptr [ rcx + 0xCC ]
+		// movss xmm6, xmm0
 		constexpr BranchInstruction FUNC_INSTRUCTION = {
 			nullptr,
 			0,
-			"\xF3\x0F\x10\xB1\xCC\x00\x00\x00",
-			8,
+			"\xF3\x0F\x10\xF0",
+			4,
 			true
 		};
 	}
 
 
-	void __fastcall Hook_RecalculateChargeTime(RE::SpellItem* a_spellItem)
+	// rcx == RE::SpellItem*
+	float __fastcall Hook_RecalculateChargeTime(RE::SpellItem* a_spellItem)
 	{
-		if (*Settings::useGlobal && Settings::global) {
-			a_spellItem->data.chargeTime *= Settings::global->value;
-		} else {
-			a_spellItem->data.chargeTime *= *Settings::factor;
-		}
+		return a_spellItem->data.chargeTime * (*Settings::useGlobal && Settings::global 
+											   ? Settings::global->value
+											   : *Settings::factor);
 	}
-	
-	
+
+
 	bool InstallHooks()
 	{
 		auto success = true;
-
-		/**
+		const auto funcAddr = std::uintptr_t(&Hook_RecalculateChargeTime);
+		
 		success &= DKUtil::Hook::BranchToFunction<FUNC_ID, OFFSET_START, OFFSET_END>(
-			&Hook_RecalculateChargeTime,
+			funcAddr,
 			FUNC_INSTRUCTION
 		);
-		/**/
-
 
 		return success;
 	}

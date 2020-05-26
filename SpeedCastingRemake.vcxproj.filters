@@ -13,7 +13,7 @@
     <ClCompile Include="src\Settings.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="Hooks.cpp">
+    <ClCompile Include="src\Hooks.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
