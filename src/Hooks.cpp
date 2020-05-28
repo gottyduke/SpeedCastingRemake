@@ -2,8 +2,9 @@
 
 #include "Settings.h"
 
+// reduced trampoline load from 23B to 21B
 #define DKUTIL_HOOK_SMART_ALLOC
-#define DKUTIL_HOOK_VERBOSE
+//#define DKUTIL_HOOK_VERBOSE
 #include "DKUtil/Hook.hpp"
 
 #include "RE/SpellItem.h"
@@ -28,10 +29,21 @@ namespace Hooks
 		};
 	}
 
-
-	// rcx == RE::SpellItem*
+	
+	/*
+	 * maybe I could just alter the chargeTime directly
+	 * but to keep it decoupled, I guess it should be left untouched
+	 * only use this temporary value as new chargeTime
+	 */
+	
+	// rcx == rdx == r8 == r9 == RE::SpellItem*
+	// but I only need one
 	float __fastcall Hook_RecalculateChargeTime(RE::SpellItem* a_spellItem)
 	{
+		if (!a_spellItem) {
+			return 0.0f;
+		}
+		
 		return a_spellItem->data.chargeTime * (*Settings::useGlobal && Settings::global 
 											   ? Settings::global->value
 											   : *Settings::factor);

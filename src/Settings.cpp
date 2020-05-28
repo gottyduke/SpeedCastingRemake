@@ -13,7 +13,8 @@ bool Settings::LoadSettings(const bool a_dumpParse)
 }
 
 
-decltype(Settings::factor) Settings::factor("SpeedCastFactor", 0.0f);
+decltype(Settings::factor) Settings::factor("SpeedCastingFactor", 0.0f);
+decltype(Settings::useHook)	Settings::useHook("UseHook", true);
 decltype(Settings::useGlobal) Settings::useGlobal("UseGlobal", false);
-decltype(Settings::globalName) Settings::globalName("GlobalName", "SpeedCastGlobal");
+decltype(Settings::globalName) Settings::globalName("GlobalName", "SpeedCastingGlobal");
 decltype(Settings::global) Settings::global(nullptr);

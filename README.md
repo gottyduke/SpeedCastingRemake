@@ -12,5 +12,6 @@
 Setting | Type | Default | Description
 --- | --- | --- | ---
 `SpeedCastFactor` | `float` | 0.5 | Multiplier of original casting speed
+`UseHook` | `bool` | true | Use hook or postload scan method to achieve this
 `UseGlobal` | `bool` | false | Use value of global variable as factor
 `GlobalName` | `string` | SpeedCastGlobal | Name of the global variable to use

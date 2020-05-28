@@ -9,7 +9,7 @@ namespace RE
 
 namespace Hooks
 {
-	float Hook_RecalculateChargeTime(RE::SpellItem* a_spellItem);
+	float __fastcall Hook_RecalculateChargeTime(RE::SpellItem* a_spellItem);
 	
 	bool InstallHooks();
 }

@@ -1,5 +1,6 @@
 {
-  "SpeedCastFactor": 0.0,
+  "SpeedCastingFactor": 0.5,
+  "UseHook": true, 
   "UseGlobal": false,
-  "GlobalName": "SpeedCastGlobal"
+  "GlobalName": "SpeedCastingGlobal"
 }
