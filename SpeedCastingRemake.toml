@@ -1,0 +1,21 @@
+[SpeedCasting]
+SpellCastingFactor = 0.5
+EnableHook = true
+EnableHostileNPC = false
+EnableAlliedNPC = true
+EnableFollower = true
+
+[Global]
+EnableGlobalUsage = false
+GlobalName = "SpeedCastingFactor"
+
+[MasterSpell]
+EnableMasterSpellSeparation = true
+MasterSpellCastingFactor = 0.8
+
+[Exclusion]
+# Add excluded spells after 0x00000, e.g for Fire Storm, add 0x7A82B
+# Separated by mandatory comma (,) and optional new line
+ExcludedSpells = [
+    0x00000,
+]
