@@ -1,24 +1,23 @@
 cmake_minimum_required(VERSION 3.19)
 
-if(NOT LINKAGE_OVERRIDE)
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+if(${MTD})
+set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "")
+else()
 set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
-endif()
-
-if(NOT ANNIVERSARY_EDITION)
-	set(ANNIVERSARY_EDITION FALSE CACHE BOOL "")
 endif()
 
 # info
 project(
 	SpeedCastingRemake
-	VERSION 1.0.0
+	VERSION 1.0.1
 	LANGUAGES CXX
 )
 
 # out-of-source builds only
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+if(${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
 	message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
@@ -48,17 +47,13 @@ find_package(spdlog CONFIG REQUIRED)
 execute_process(COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_CURRENT_SOURCE_DIR}/!Update.ps1" "SOURCEGEN" "${PROJECT_VERSION}" "${CMAKE_CURRENT_BINARY_DIR}")
 include(${CMAKE_CURRENT_BINARY_DIR}/sourcelist.cmake)
 source_group(
-	TREE
-		${CMAKE_CURRENT_SOURCE_DIR}
-	FILES
-		${SOURCES}
+	TREE ${CMAKE_CURRENT_SOURCE_DIR}
+	FILES ${SOURCES}
 )
 
 source_group(
-	TREE
-		${CMAKE_CURRENT_BINARY_DIR}
-	FILES
-		${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
+	TREE ${CMAKE_CURRENT_BINARY_DIR}
+	FILES ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
 )
 
 # runtime

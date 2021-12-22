@@ -10,37 +10,32 @@ namespace Hooks
 	constexpr std::ptrdiff_t OFFSET_START = 0;
 	constexpr std::ptrdiff_t OFFSET_END = 0;
 
-	// post patch:
-	// movss xmm6, xmm0
-	constexpr DKUtil::Hook::BranchInstruction INSTRUCTION = {
+	constexpr DKUtil::Hook::Patch Prolog = {
 		nullptr,
-		0,
+		0
+	};
+
+	constexpr DKUtil::Hook::Patch Epilog = {
 		nullptr,
-		0,
-		true
+		0
 	};
 
 #else
+	
+	constexpr std::uint64_t FuncID = 11358;
+	constexpr std::ptrdiff_t OffsetLow = 0x11;
+	constexpr std::ptrdiff_t OffsetHigh = 0x19;
 
-	constexpr std::uint64_t FUNC_ID = 11358;
-	constexpr std::ptrdiff_t OFFSET_START = 0x11;
-	constexpr std::ptrdiff_t OFFSET_END = 0x19;
-
-	// post patch:
-	// movss xmm6, xmm0
-	constexpr DKUtil::Hook::BranchInstruction INSTRUCTION = {
-		nullptr,
-		0,
-		"\xF3\x0F\x10\xF0",
-		4,
-		true
+	// Epilog to unwind the stack because of MSVC 14.3 ... why did you touch my stack?!
+	constexpr DKUtil::Hook::Patch Epilog = {
+		"\x0F\x10\xF0\x48\x8B\x03\x48\x89\xD9",
+		9
 	};
-
+	
 #endif
 
-
-	// rcx == rdx == r8 == r9 == RE::SpellItem*
-	// but I only need one
+	
+	// rcx -> RE::SpellItem*
 	float __cdecl Hook_RecalculateChargeTime(RE::SpellItem* a_spellItem)
 	{
 		if (!a_spellItem) {
@@ -53,14 +48,29 @@ namespace Hooks
 	}
 
 
+	HookHandle _Hook_RCT;
+
+
 	void Install()
 	{
-		
-		DKUtil::Hook::BranchToID<FUNC_ID, OFFSET_START, OFFSET_END>(
-			&Hook_RecalculateChargeTime,
-			INSTRUCTION
+		static std::once_flag HookInit;
+		std::call_once(HookInit, [&]()
+			{
+				const auto address = DKUtil::Hook::RVA2Abs(FuncID);
+				_Hook_RCT = DKUtil::Hook::AddCaveHook<OffsetLow, OffsetHigh>(address, FUNC_INFO(Hook_RecalculateChargeTime), nullptr, &Epilog);
+			}
 		);
-		
+
+		_Hook_RCT->Enable();
+
 		INFO("Hooks installed"sv);
+	}
+
+	
+	void Uninstall()
+	{
+		_Hook_RCT->Disable();
+
+		INFO("Hooks uninstalled"sv);
 	}
 }
