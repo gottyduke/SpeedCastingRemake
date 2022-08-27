@@ -1,21 +1,173 @@
+# Version 2.0.0
 [SpeedCasting]
-SpellCastingFactor = 0.5
+# This is a global factor, applies to ALL enabled SCR options ON TOP OF their respective factors!
+# Lesser = faster, Greater = slower
+SpeedCastingFactor = 1.0
+# Original casting time (in seconds) required to be affected by SCR
+SpeedCastingRequirement = 0.5
+# Minimum casting time (in seconds) after SCR's dynamic evaluation
+SpeedCastingMinimum = 0.1
+# Enabled by default, setting it to false won"t change anything, placebo only
 EnableHook = true
-EnableHostileNPC = false
-EnableAlliedNPC = true
-EnableFollower = true
+# Use TESGlobal variables to control SCR related formulas, useful when you want to modify it with scripts/other means
+# When enabled, factors set in this configuration file will be replaced with TESGlobal value instead
+EnableTESGlobalControl = false
+# Debug logging output, useful for generating bug report, but leave it false during normal gameplay
+EnableDebug = false
 
-[Global]
-EnableGlobalUsage = false
-GlobalName = "SpeedCastingFactor"
+
+[IncreasedMagickaCost]
+# Enable increased magicka cost for spell based on their SCR factor
+# This is a global factor, applies to ALL enabled IMC options ON TOP OF their respective factors!
+# This is only functional if the final SCR factor is less than 1.0 (faster casting)
+# e.g. 1.0 = increase magicka cost by 1.0 * Original Cost * ( 1 - SCR factor ), a 30% faster spell(SCR factor of 0.7) will cost 30% more magicka with a IncreasedMagickaCostFactor of 1.0
+IncreasedMagickaCostFactor = 0.0            # Set to any non 0 value to enable
+IncreasedMagickaCostCombatOverride = 0.0    # Set to any non 0 value to override IMC factor in combat
+
+
+[Player]
+EnablePlayer = true
+PlayerSCRFactor = 0.5
+PlayerSCRCombatOverride = 0.0 # Set to any non 0 value to override SCR factor in combat
+PlayerIMCFactorOverride = 0.0 # Set to any non 0 value to override IMC factor in combat
+
+
+[Hostile]
+EnableHostile = true
+HostileSCRFactor = 0.5
+HostileSCRCombatOverride = 0.0  # Set to any non 0 value to override SCR factor in combat
+HostileIMCFactorOverride = 0.0  # Set to any non 0 value to override IMC factor in combat
+ExcludedHostile = [             # Exclude certain hostile NPC from being affected by SCR/IMC or all NPCs from certain plugin
+    "# Add NPC Editor ID Below",    # e.g. "Duraz3DNPC"
+    "# Or Entire Plugin",           # e.g. "3DNPC.esp"
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+    
+]
+
+
+[Ally]
+EnableAlly = true
+AllySCRFactor = 0.5
+AllySCRCombatOverride = 0.0 # Set to any non 0 value to override SCR factor in combat
+AllyIMCFactorOverride = 0.0 # Set to any non 0 value to override IMC factor in combat
+ExcludedAlly = [            # Exclude certain allied NPC from being affected by SCR/IMC or all NPCs from certain plugin
+    "# Add NPC Editor ID Below",    # e.g. "Duraz3DNPC"
+    "# Or Entire Plugin",           # e.g. "3DNPC.esp"
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+
+
+[Follower]
+EnableFollower = true
+FollowerSCRFactor = 0.5
+FollowerSCRCombatOverride = 0.0 # Set to any non 0 value to override SCR factor in combat
+FollowerIMCFactorOverride = 0.0 # Set to any non 0 value to override IMC factor in combat
+ExcludedFollower = [            # Exclude certain follower from being affected by SCR/IMC
+    "# Add Follower Editor ID Below", # e.g. "JJSofiaFollower"
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+
+
+[TESGlobal]
+# all float
+SCRFactor_Global = "SCR_CastingFactor"
+IMCFactor_Global = "SCR_MagickaFactor"
+
 
 [MasterSpell]
-EnableMasterSpellSeparation = true
-MasterSpellCastingFactor = 0.8
+# Exclusive SCR/IMC factor for master spells, this will replace other factors regardless
+EnableMasterSpell = true
+MasterSpellSCRFactor = 1.0
+MasterSpellIMCFactor = 0.0
+# To add custom spells to be considered Master Spell, refer to the bundled Skyrim_SCR.ini file and mod page
+
 
 [Exclusion]
-# Add excluded spells after 0x00000, e.g for Fire Storm, add 0x7A82B
-# Separated by mandatory comma (,) and optional new line
-ExcludedSpells = [
-    0x00000,
+# Add spell"s Form ID for exclusion, e.g. for Fire Storm, add "0x7A82B" or "0x07A82B" but do not include the first two digits of mod index
+# If the spell is from ESLight-flagged plugin (including ESPFE), e.g. "0xFEXXX123", where "XXX" stands for the load order of the light plugin, add "0x123|Magic.esl"
+# You can find Editor ID in SSEEdit or CreationKit
+# To exclude all spells from a plugin entirely, e.g. from Odin.esp, add "Odin.esp"
+ExcludedSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    "ExampleExcludedPlugin.esp",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+# Enable spell regardless of its exclusion state, useful when you want certain but not all spells from a plugin to use SCR functionality
+EnabledSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+
+
+[[Exclusion.Player]]
+# Override excluded spell for player regardless of its enabled state
+PlayerExcludedSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+# Override enabled spell for player regardless of its exclusion state
+PlayerEnabledSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+
+
+[[Exclusion.Hostile]]
+# Override excluded spell for hostile regardless of its enabled state
+HostileExcludedSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+# Override enabled spell for hostile regardless of its exclusion state
+HostileEnabledSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+
+
+[[Exclusion.Ally]]
+# Override excluded spell for ally regardless of its enabled state
+AllyExcludedSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+# Override enabled spell for ally regardless of its exclusion state
+AllyEnabledSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+
+
+[[Exclusion.Follower]]
+# Override excluded spell for follower regardless of its enabled state
+FollowerExcludedSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
+]
+# Override enabled spell for follower regardless of its exclusion state
+FollowerEnabledSpell = [
+    "0x000000",
+    "0x000|ExampleLightPlugin.esl",
+    # Surrounded by double quotation marks ("), separated by mandatory comma (,) and optional new line
+
 ]

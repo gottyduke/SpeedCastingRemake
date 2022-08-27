@@ -1,14 +1,14 @@
 {
-    "name":  "speedcastingremake",
-    "version-string":  "1.0.1",
-    "description":  "An SKSE Plugin Modifies Spell Casting Speed.",
-    "license":  "MIT",
-    "dependencies":  [
-                         "spdlog"
-                     ],
-    "features":  {
-                     "mo2-install":  {
-                                         "description":  "SpeedCastingRemake"
-                                     }
-                 }
+  "name": "speedcastingremake",
+  "version-string": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "dependencies": [
+    "spdlog"
+  ],
+  "features": {
+    "mo2-install": {
+      "description": "SpeedCastingRemake"
+    }
+  }
 }

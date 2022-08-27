@@ -1,34 +1,30 @@
-#include "Hooks.h"
+﻿#include "Hooks.h"
 #include "Config.h"
 
 
 namespace
 {
+	auto* config = Config::Main::GetSingleton();
+
+
 	void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 	{
 		if (a_msg->type == SKSE::MessagingInterface::kDataLoaded) {
 			auto* data = RE::TESDataHandler::GetSingleton();
 
-			auto& spellforms = data->GetFormArray(RE::FormType::Spell);
+			auto& spells = data->GetFormArray(RE::FormType::Spell);
+			auto& npcs = data->GetFormArray(RE::FormType::NPC);
 
-			for (auto& form : spellforms) {
-				if (!form) {
-					continue;
-				}
+			for (auto*& form : spells) {
+				if (auto* spell = static_cast<RE::SpellItem*>(form); spell) {
+					spell->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
 
-				auto* spell = static_cast<RE::SpellItem*>(form);
-
-				if ((spell->data.flags & RE::SpellItem::SpellFlag::kCostOverride) == RE::SpellItem::SpellFlag::kNone) {
-					spell->data.flags = spell->data.flags ^ static_cast<RE::SpellItem::SpellFlag>(1 << 0);
-				}
-
-				if (!*Config::EnableHookUsage) {
-					spell->data.chargeTime *= static_cast<float>(*Config::SpellCastingFactor);
+					// TODO
 				}
 			}
 
-			if (*Config::EnableHookUsage && *Config::EnableGlobalUsage) {
-				INFO("Global usage enabled"sv);
+			if (*config->EnableTESGlobalControl) {
+				INFO("TESGlobal variable control enabled"sv);
 
 				auto& forms = data->GetFormArray(RE::FormType::Global);
 
@@ -37,18 +33,24 @@ namespace
 						continue;
 					}
 
-					auto* global = static_cast<RE::TESGlobal*>(form);
+					if (auto* global = static_cast<RE::TESGlobal*>(form); global) {
+						if (global->formEditorID == *config->SCRFactor_Global) {
+							config->TES_SCRFactor = global;
 
-					if (global && global->formEditorID == *Config::GlobalName) {
-						Config::Global = global;
+							INFO("SCRFactor_Global found, initial value: {}", global->value);
+							break;
+						} else if (global->formEditorID == *config->IMCFactor_Global) {
+							config->TES_IMCFactor = global;
 
-						INFO("Global found, initial value: {}", global->value);
-						break;
+							INFO("IMCFactor_Global found, initial value: {}", global->value);
+							break;
+						}
 					}
 				}
 
-				if (!Config::Global) {
-					INFO("Failed to find global"sv);
+				if (!config->TES_SCRFactor && !config->TES_IMCFactor) {
+					INFO("TESGlobal variable control enabled but failed to find any matching global! Disabled and will use configuration file instead"sv);
+					*config->EnableTESGlobalControl = false;
 				}
 			}
 		}
@@ -56,68 +58,41 @@ namespace
 }
 
 
-#if ANNIVERSARY_EDITION
-
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []()
+DLLEXPORT constinit auto SKSEPlugin_Version = []() noexcept
 {
 	SKSE::PluginVersionData data{};
 
-	data.PluginVersion(Version::MAJOR);
-	data.PluginName(Version::NAME);
-	data.AuthorName("Dropkicker"sv);
-
-	data.CompatibleVersions({ SKSE::RUNTIME_LATEST });
+	data.PluginVersion(Plugin::Version);
+	data.PluginName(Plugin::NAME);
+	data.AuthorName(Plugin::AUTHOR);
 	data.UsesAddressLibrary(true);
 
 	return data;
 }();
 
-#else
 
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
+DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo* pluginInfo)
 {
-	DKUtil::Logger::Init(Version::PROJECT, Version::NAME);
+    pluginInfo->name = SKSEPlugin_Version.pluginName;
+    pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
+    pluginInfo->version = SKSEPlugin_Version.pluginVersion;
 
-	a_info->infoVersion = SKSE::PluginInfo::kVersion;
-	a_info->name = Version::PROJECT.data();
-	a_info->version = Version::MAJOR;
-
-	if (a_skse->IsEditor()) {
-		ERROR("Loaded in editor, marking as incompatible"sv);
-		return false;
-	}
-
-	const auto ver = a_skse->RuntimeVersion();
-	if (ver < SKSE::RUNTIME_1_5_39) {
-		ERROR("Unable to load this plugin, incompatible runtime version!\nExpected: Newer than 1-5-39-0 (A.K.A Special Edition)\nDetected: {}", ver.string());
-		return false;
-	}
-
-	return true;
+    return true;
 }
 
-#endif
 
-
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
+DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
-#if ANNIVERSARY_EDITION
 
-	DKUtil::Logger::Init(Version::PROJECT, Version::NAME);
+	DKUtil::Logger::Init(Plugin::NAME, REL::Module::get().version().string());
 
-	if (REL::Module::get().version() < SKSE::RUNTIME_1_6_317) {
-		ERROR("Unable to load this plugin, incompatible runtime version!\nExpected: Newer than 1-6-317-0 (A.K.A Anniversary Edition)\nDetected: {}", REL::Module::get().version().string());
-		return false;
-	}
-
-#endif
-
-	INFO("{} v{} loaded", Version::PROJECT, Version::NAME);
-
+	REL::Module::reset();
 	SKSE::Init(a_skse);
-	SKSE::AllocTrampoline(1 << 6);
+	
+	INFO("{} v{} loaded", Plugin::NAME, Plugin::Version);
 
-	Config::Load();
+	// do stuff
+	Config::Main::GetSingleton()->Load();
 
 	const auto* const messaging = SKSE::GetMessagingInterface();
 	if (!messaging->RegisterListener(MessageHandler)) {

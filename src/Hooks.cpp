@@ -4,35 +4,34 @@
 
 namespace Hooks
 {
-#if ANNIVERSARY_EDITION
+	auto* config = Config::Main::GetSingleton();
 
-	constexpr std::uint64_t FUNC_ID = 0;
-	constexpr std::ptrdiff_t OFFSET_START = 0;
-	constexpr std::ptrdiff_t OFFSET_END = 0;
 
-	constexpr DKUtil::Hook::Patch Prolog = {
-		nullptr,
-		0
+	// TODO...
+	constexpr std::uint64_t FuncIDAE = 11496;
+	constexpr std::ptrdiff_t OffsetLowAE = 0x00;
+	constexpr std::ptrdiff_t OffsetHighAE = 0x00;
+
+	constexpr DKUtil::Hook::Patch EpilogAE = {
+		"",
+		1
 	};
 
-	constexpr DKUtil::Hook::Patch Epilog = {
-		nullptr,
-		0
-	};
 
-#else
-	
-	constexpr std::uint64_t FuncID = 11358;
-	constexpr std::ptrdiff_t OffsetLow = 0x11;
-	constexpr std::ptrdiff_t OffsetHigh = 0x19;
+	constexpr std::uint64_t FuncIDSE = 11358;
+	constexpr std::ptrdiff_t OffsetLowSE = 0x11;
+	constexpr std::ptrdiff_t OffsetHighSE = 0x19;
 
 	// Epilog to unwind the stack because of MSVC 14.3 ... why did you touch my stack?!
-	constexpr DKUtil::Hook::Patch Epilog = {
-		"\x0F\x10\xF0\x48\x8B\x03\x48\x89\xD9",
+	constexpr DKUtil::Hook::Patch EpilogSE = {
+		// movups xmm6, xmm0
+		"\x0F\x10\xF0"
+		// mov rax, qword ptr [rbx]
+		"\x48\x8B\x03"
+		// mov rcx, rbx
+		"\x48\x89\xD9",
 		9
 	};
-	
-#endif
 
 	
 	// rcx -> RE::SpellItem*
@@ -41,10 +40,9 @@ namespace Hooks
 		if (!a_spellItem) {
 			return 0.0f;
 		}
-		
-		return a_spellItem->data.chargeTime * (*Config::EnableGlobalUsage && Config::Global
-											   ? Config::Global->value
-											   : static_cast<float>(*Config::SpellCastingFactor));
+
+		// TODO
+		return 0.0f;
 	}
 
 
@@ -56,8 +54,13 @@ namespace Hooks
 		static std::once_flag HookInit;
 		std::call_once(HookInit, [&]()
 			{
-				const auto address = DKUtil::Hook::RVA2Abs(FuncID);
-				_Hook_RCT = DKUtil::Hook::AddCaveHook<OffsetLow, OffsetHigh>(address, FUNC_INFO(Hook_RecalculateChargeTime), nullptr, &Epilog);
+			PAGE_ALLOC(1 << 6);
+
+			_Hook_RCT = DKUtil::Hook::AddCaveHook(
+				DKUtil::Hook::IDToAbs(FuncIDAE, FuncIDSE), 
+				DKUtil::Hook::RuntimeOffset(OffsetLowAE, OffsetHighAE, OffsetLowSE, OffsetHighSE), 
+				FUNC_INFO(Hook_RecalculateChargeTime), 
+				nullptr, DKUtil::Hook::RuntimePatch(&EpilogAE, &EpilogSE));
 			}
 		);
 

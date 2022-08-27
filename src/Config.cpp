@@ -3,35 +3,90 @@
 
 namespace Config
 {
-	Double SpellCastingFactor{ "SpellCastingFactor" };
-	Boolean EnableHookUsage{ "EnableHook" };
-	Boolean EnableHostileNPC{ "EnableHostileNPC" };
-	Boolean EnableAlliedNPC{ "EnableAlliedNPC" };
-	Boolean EnableFollower{ "EnableFollower" };
-	Boolean EnableGlobalUsage{ "EnableGlobalUsage" };
-	String GlobalName{ "GlobalName" };
-	Boolean EnableMasterSpellSeparation{ "EnableMasterSpellSeparation" };
-	Double MasterSpellCastingFactor{ "MasterSpellCastingFactor" };
-	Integer ExcludedSpells{ "ExcludedSpells" };
-	RE::TESGlobal* Global{ nullptr };
-
-
-	void Load()
+	void Main::Load() noexcept
 	{
-		auto mainConfig = COMPILE_PROXY("SpeedCastingRemake.toml"sv);
+		static std::once_flag ConfigInit;
+		std::call_once(ConfigInit, [&]() {
+			// [[SpeedCasting]]
+			config.Bind(SpeedCastingFactor, 1.0);
+			config.Bind(SpeedCastingRequirement, 0.5);
+			config.Bind(SpeedCastingMinimum, 0.1);
+			config.Bind(EnableHook, true);
+			config.Bind(EnableTESGlobalControl, false);
+			config.Bind(EnableDebug, false);
 
-		mainConfig.Bind(SpellCastingFactor, 0.5);
-		mainConfig.Bind(EnableHookUsage, true);
-		mainConfig.Bind(EnableHostileNPC, false);
-		mainConfig.Bind(EnableAlliedNPC, true);
-		mainConfig.Bind(EnableFollower, true);
-		mainConfig.Bind(EnableGlobalUsage, false);
-		mainConfig.Bind(GlobalName, "SpeedCastingFactor");
-		mainConfig.Bind(EnableMasterSpellSeparation, 0.8);
-		mainConfig.Bind(ExcludedSpells, 0);
+			// [[IncreasedMagickaCost]]
+			config.Bind(IncreasedMagickaCostFactor, 0.0);
+			config.Bind(IncreasedMagickaCostCombatOverride, 0.0);
 
-		mainConfig.Load();
+			// [[Player]]
+			config.Bind(EnablePlayer, true);
+			config.Bind(PlayerSCRFactor, 0.5);
+			config.Bind(PlayerSCRCombatOverride, 0.0);
+			config.Bind(PlayerIMCFactorOverride, 0.0);
+
+			// [[Hostile]]
+			config.Bind(EnableHostile, true);
+			config.Bind(HostileSCRFactor, 0.5);
+			config.Bind(HostileSCRCombatOverride, 0.0);
+			config.Bind(HostileIMCFactorOverride, 0.0);
+			config.Bind(ExcludedHostile, "");
+
+			// [[Ally]]
+			config.Bind(EnableAlly, true);
+			config.Bind(AllySCRFactor, 0.5);
+			config.Bind(AllySCRCombatOverride, 0.0);
+			config.Bind(AllyIMCFactorOverride, 0.0);
+			config.Bind(ExcludedAlly, "");
+
+			// [[Follower]]
+			config.Bind(EnableFollower, true);
+			config.Bind(FollowerSCRFactor, 0.5);
+			config.Bind(FollowerSCRCombatOverride, 0.0);
+			config.Bind(FollowerIMCFactorOverride, 0.0);
+			config.Bind(ExcludedFollower, "");
+
+			// [[TESGlobal]]
+			config.Bind(SCRFactor_Global, "SCR_CastingFactor");
+			config.Bind(IMCFactor_Global, "SCR_MagickaFactor");
+
+			// [[MasterSpell]]
+			config.Bind(EnableMasterSpell, true);
+			config.Bind(MasterSpellSCRFactor, 1.0);
+			config.Bind(MasterSpellIMCFactor, 0.0);
+
+			// [[Exclusion]]
+			config.Bind(ExcludedSpell, "");
+			config.Bind(EnabledSpell, "");
+
+			// [[Exclusion.Player]]
+			config.Bind(PlayerExcludedSpell, "");
+			config.Bind(PlayerEnabledSpell, "");
+
+			// [[Exclusion.Hostile]]
+			config.Bind(HostileExcludedSpell, "");
+			config.Bind(HostileEnabledSpell, "");
+
+			// [[Exclusion.Ally]]
+			config.Bind(AllyExcludedSpell, "");
+			config.Bind(AllyEnabledSpell, "");
+
+			// [[Exclusion.Follower]]
+			config.Bind(FollowerExcludedSpell, "");
+			config.Bind(FollowerEnabledSpell, "");
+		});
+
+
+		config.Load();
 		
+		if (*EnableDebug) {
+			ENABLE_DEBUG
+		} else {
+			DISABLE_DEBUG
+		}
+
+
+
 		INFO("Config loaded"sv);
 	}
 }
